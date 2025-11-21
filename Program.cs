@@ -3,10 +3,10 @@ using ClaimsManagementApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// services to the container.
 builder.Services.AddControllersWithViews();
 
-// Add authentication
+//  authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
