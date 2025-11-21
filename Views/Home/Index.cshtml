@@ -1,0 +1,85 @@
+﻿@{
+    ViewData["Title"] = "Home - Claims Management";
+}
+
+<div class="container text-center">
+    <h1 class="display-4 mb-5">Claims Management System</h1>
+
+    <div class="row">
+        <!-- Lecturer Portal -->
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Lecturer Portal</h5>
+                    <p class="card-text">Submit and track your claims</p>
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("Login", "Auth")" class="btn btn-outline-primary">Login as Lecturer</a>
+                        <a href="@Url.Action("Register", "Auth")" class="btn btn-primary">Register as Lecturer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coordinator Portal -->
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <i class="fas fa-user-tie fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Coordinator Portal</h5>
+                    <p class="card-text">Review and verify claims</p>
+                    <div class="d-grid">
+                        <a href="@Url.Action("Login", "Auth", new { role = "Coordinator" })" class="btn btn-success">Login as Coordinator</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manager Portal -->
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <i class="fas fa-user-cog fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Manager Portal</h5>
+                    <p class="card-text">Final approval of claims</p>
+                    <div class="d-grid">
+                        <a href="@Url.Action("Login", "Auth", new { role = "Manager" })" class="btn btn-warning">Login as Manager</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HR Portal -->
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <i class="fas fa-hand-holding-usd fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">HR Portal</h5>
+                    <p class="card-text">Process payments and settlements</p>
+                    <div class="d-grid">
+                        <a href="@Url.Action("Login", "Auth", new { role = "HR" })" class="btn btn-info">Login as HR</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Default Credentials Info -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h6>Default Login Credentials:</h6>
+                <small>
+                    <strong>Coordinator:</strong> coordinator / coord123<br>
+                    <strong>HR:</strong> hr / hr123<br>
+                    <strong>Manager:</strong> manager / manager123<br>
+                    <strong>Lecturer:</strong> Register first, then login
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="mt-5 text-center">
+    <p>© 2024 - Claims Management System - PROG6212 Assignment</p>
+</footer>

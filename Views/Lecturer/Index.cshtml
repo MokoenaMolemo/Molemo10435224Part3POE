@@ -1,0 +1,497 @@
+﻿@model List<Claim>
+@using ClaimsManagementApp.Models
+@{
+    ViewData["Title"] = "My Claims";
+}
+
+<div class="container">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">My Claims</h2>
+            <p class="text-muted mb-0">Track and manage your submitted claims</p>
+        </div>
+        <a href="@Url.Action("SubmitClaim")" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus-circle me-2"></i>Submit New Claim
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-primary">Total Claims</h6>
+                            <h3 class="mb-0">@Model.Count</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-invoice fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-warning">Pending</h6>
+                            <h3 class="mb-0">@Model.Count(c => c.Status == ClaimStatus.Pending)</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-success">Approved</h6>
+                            <h3 class="mb-0">@Model.Count(c => c.Status == ClaimStatus.ApprovedByManager || c.Status == ClaimStatus.Settled)</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-danger">Rejected</h6>
+                            <h3 class="mb-0">@Model.Count(c => c.Status == ClaimStatus.RejectedByCoordinator || c.Status == ClaimStatus.RejectedByManager)</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-times-circle fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Claims Table -->
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">No Claims Submitted</h4>
+            <p class="text-muted mb-4">You haven't submitted any claims yet. Get started by submitting your first claim.</p>
+            <a href="@Url.Action("SubmitClaim")" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>Submit Your First Claim
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Claim History</h5>
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3">Auto-refreshes every 30 seconds</small>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoRefreshSwitch" checked>
+                            <label class="form-check-label" for="autoRefreshSwitch">Auto Refresh</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Claim ID</th>
+                                <th>Lecturer</th>
+                                <th>Submitted</th>
+                                <th>Hours</th>
+                                <th>Rate</th>
+                                <th>Total Amount</th>
+                                <th>Status</th>
+                                <th>Last Update</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var claim in Model.OrderByDescending(c => c.SubmissionDate))
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-bold">#@claim.Id</td>
+                                    <td>@claim.LecturerName</td>
+                                    <td>
+                                        <div>@claim.SubmissionDate.ToString("dd/MM/yyyy")</div>
+                                        <small class="text-muted">@claim.SubmissionDate.ToString("HH:mm")</small>
+                                    </td>
+                                    <td>@claim.HoursWorked</td>
+                                    <td>R @claim.HourlyRate.ToString("N2")</td>
+                                    <td>
+                                        <strong class="text-success">R @claim.TotalAmount.ToString("N2")</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetStatusBadgeClass(claim.Status) @GetStatusBadgeSize(claim.Status)"
+                                              data-claim-id="@claim.Id">
+                                            <i class="@GetStatusIcon(claim.Status) me-1"></i>
+                                            @GetStatusDisplayText(claim.Status)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">@GetLastActionTime(claim)</small>
+                                        <div class="progress mt-1" style="height: 3px;">
+                                            <div class="progress-bar @GetProgressBarClass(claim.Status)"
+                                                 style="width: @GetProgressPercentage(claim.Status)%"></div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="@Url.Action("TrackClaim", new { id = claim.Id })"
+                                               class="btn btn-outline-primary"
+                                               data-bs-toggle="tooltip"
+                                               title="Track Claim Progress">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <a href="@Url.Action("ClaimDetails", new { id = claim.Id })"
+                                               class="btn btn-outline-info"
+                                               data-bs-toggle="tooltip"
+                                               title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            @if (HasDocuments(claim))
+                                            {
+                                                <button class="btn btn-outline-secondary"
+                                                        data-bs-toggle="tooltip"
+                                                        title="@GetDocumentCount(claim) document(s) attached"
+                                                        onclick="showDocuments(@claim.Id)">
+                                                    <i class="fas fa-paperclip"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            Showing @Model.Count claim@(Model.Count != 1 ? "s" : "")
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <small class="text-muted">
+                            Last updated: @DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Documents Modal -->
+<div class="modal fade" id="documentsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Claim Documents</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="documentsModalBody">
+                <!-- Documents will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.04);
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        .badge-lg {
+            padding: 0.5em 0.8em;
+            font-size: 0.85em;
+        }
+
+        .progress {
+            width: 80px;
+            background-color: #e9ecef;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: box-shadow 0.15s ease-in-out;
+        }
+
+            .card:hover {
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background-color: #d1edff;
+            color: #0c5460;
+        }
+
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-settled {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+
+            // Auto-refresh functionality
+            const autoRefreshSwitch = document.getElementById('autoRefreshSwitch');
+            let refreshInterval;
+
+            function startAutoRefresh() {
+                refreshInterval = setInterval(function() {
+                    console.log('Refreshing claims data...');
+                    location.reload();
+                }, 30000); // 30 seconds
+            }
+
+            function stopAutoRefresh() {
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                }
+            }
+
+            // Initialize auto-refresh
+            if (autoRefreshSwitch && autoRefreshSwitch.checked) {
+                startAutoRefresh();
+            }
+
+            // Toggle auto-refresh
+            if (autoRefreshSwitch) {
+                autoRefreshSwitch.addEventListener('change', function() {
+                    if (this.checked) {
+                        startAutoRefresh();
+                    } else {
+                        stopAutoRefresh();
+                    }
+                });
+            }
+
+            // Animate table rows
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach((row, index) => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(20px)';
+
+                setTimeout(() => {
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+
+            // Update last updated time every minute
+            setInterval(updateLastUpdatedTime, 60000);
+        });
+
+        function updateLastUpdatedTime() {
+            const now = new Date();
+            const timeElement = document.querySelector('.card-footer .text-muted:last-child');
+            if (timeElement) {
+                const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                timeElement.textContent = `Last updated: ${formattedDate}`;
+            }
+        }
+
+        // Show documents modal
+        function showDocuments(claimId) {
+            // In a real implementation, you would fetch documents via AJAX
+            // For now, we'll show a simple message
+            const modalBody = document.getElementById('documentsModalBody');
+            modalBody.innerHTML = `
+                <div class="text-center py-3">
+                    <i class="fas fa-paperclip fa-3x text-muted mb-3"></i>
+                    <p>Documents for Claim #${claimId}</p>
+                    <p class="text-muted small">Document viewing functionality will be implemented soon.</p>
+                    <a href="/Lecturer/DownloadDocuments/${claimId}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-download me-1"></i>Download All Documents
+                    </a>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('documentsModal'));
+            modal.show();
+        }
+
+        // Quick status refresh for a specific claim
+        function refreshClaimStatus(claimId) {
+            fetch(`/Lecturer/GetClaimStatus/${claimId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    const statusBadge = document.querySelector(`[data-claim-id="${claimId}"]`);
+                    if (statusBadge) {
+                        // Add update animation
+                        statusBadge.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            statusBadge.innerHTML = `<i class="${data.statusIcon} me-1"></i>${data.statusText}`;
+                            statusBadge.className = `badge ${data.statusClass} badge-lg`;
+                            statusBadge.style.transform = 'scale(1)';
+                        }, 150);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error refreshing claim status:', error);
+                });
+        }
+    </script>
+}
+
+@functions {
+    string GetStatusBadgeClass(ClaimStatus status)
+    {
+        return status switch
+        {
+            ClaimStatus.Pending => "bg-warning text-dark",
+            ClaimStatus.ApprovedByCoordinator => "bg-info text-white",
+            ClaimStatus.ApprovedByManager => "bg-success text-white",
+            ClaimStatus.RejectedByCoordinator or ClaimStatus.RejectedByManager => "bg-danger text-white",
+            ClaimStatus.Settled => "bg-success text-white",
+            _ => "bg-secondary text-white"
+        };
+    }
+
+    string GetStatusBadgeSize(ClaimStatus status)
+    {
+        return status switch
+        {
+            ClaimStatus.Pending or ClaimStatus.ApprovedByCoordinator => "badge-lg",
+            _ => ""
+        };
+    }
+
+    string GetStatusIcon(ClaimStatus status)
+    {
+        return status switch
+        {
+            ClaimStatus.Pending => "fas fa-clock",
+            ClaimStatus.ApprovedByCoordinator => "fas fa-user-check",
+            ClaimStatus.ApprovedByManager => "fas fa-user-tie",
+            ClaimStatus.RejectedByCoordinator or ClaimStatus.RejectedByManager => "fas fa-times",
+            ClaimStatus.Settled => "fas fa-check-double",
+            _ => "fas fa-file"
+        };
+    }
+
+    string GetStatusDisplayText(ClaimStatus status)
+    {
+        return status switch
+        {
+            ClaimStatus.Pending => "Pending Review",
+            ClaimStatus.ApprovedByCoordinator => "Coordinator Approved",
+            ClaimStatus.RejectedByCoordinator => "Rejected by Coordinator",
+            ClaimStatus.ApprovedByManager => "Manager Approved",
+            ClaimStatus.RejectedByManager => "Rejected by Manager",
+            ClaimStatus.Settled => "Settled",
+            _ => status.ToString()
+        };
+    }
+
+    string GetLastActionTime(Claim claim)
+    {
+        return claim.Status switch
+        {
+            ClaimStatus.Pending => "Awaiting initial review",
+            ClaimStatus.ApprovedByCoordinator => "Ready for manager",
+            ClaimStatus.RejectedByCoordinator => "Coordinator action",
+            ClaimStatus.ApprovedByManager => "Final approval",
+            ClaimStatus.RejectedByManager => "Manager action",
+            ClaimStatus.Settled => "Completed",
+            _ => "Processing"
+        };
+    }
+
+    int GetProgressPercentage(ClaimStatus status)
+    {
+        return status switch
+        {
+            ClaimStatus.Pending => 25,
+            ClaimStatus.ApprovedByCoordinator => 50,
+            ClaimStatus.RejectedByCoordinator => 100,
+            ClaimStatus.ApprovedByManager => 75,
+            ClaimStatus.RejectedByManager => 100,
+            ClaimStatus.Settled => 100,
+            _ => 0
+        };
+    }
+
+    string GetProgressBarClass(ClaimStatus status)
+    {
+        return status switch
+        {
+            ClaimStatus.RejectedByCoordinator or ClaimStatus.RejectedByManager => "bg-danger",
+            ClaimStatus.Settled => "bg-success",
+            _ => "bg-primary"
+        };
+    }
+
+    bool HasDocuments(Claim claim)
+    {
+        return claim.Documents?.Any() == true;
+    }
+
+    string GetDocumentCount(Claim claim)
+    {
+        return claim.Documents?.Count.ToString() ?? "0";
+    }
+}

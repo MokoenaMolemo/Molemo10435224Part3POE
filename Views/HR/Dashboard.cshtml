@@ -1,0 +1,173 @@
+﻿@model HRDashboardViewModel
+@{
+    ViewData["Title"] = "HR Dashboard";
+}
+
+<div class="container">
+    <h2><i class="fas fa-user-tie me-2"></i>HR Dashboard</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2 mb-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-invoice fa-2x text-primary mb-2"></i>
+                    <h4 class="card-title">@Model.TotalClaims</h4>
+                    <p class="card-text">Total Claims</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h4 class="card-title">@Model.ApprovedClaims</h4>
+                    <p class="card-text">Approved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h4 class="card-title">@Model.PendingSettlement</h4>
+                    <p class="card-text">Pending Settlement</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-money-bill-wave fa-2x text-info mb-2"></i>
+                    <h4 class="card-title">R @Model.PendingAmount.ToString("N2")</h4>
+                    <p class="card-text">Pending Amount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-receipt fa-2x text-success mb-2"></i>
+                    <h4 class="card-title">@Model.SettledClaims</h4>
+                    <p class="card-text">Settled Claims</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <a href="@Url.Action("SettlementQueue")" class="btn btn-success w-100">
+                                <i class="fas fa-hand-holding-usd me-2"></i>Settle Claims (@Model.PendingSettlement)
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="@Url.Action("SettledClaims")" class="btn btn-info w-100">
+                                <i class="fas fa-history me-2"></i>View Settled Claims
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="@Url.Action("GeneratePaymentReport")" class="btn btn-warning w-100">
+                                <i class="fas fa-download me-2"></i>Payment Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ready for Settlement -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>Ready for Settlement
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.ReadyForSettlement.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var claim in Model.ReadyForSettlement.Take(5))
+                            {
+                                <a href="@Url.Action("SettleClaim", new { id = claim.Id })"
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">#@claim.Id - @claim.LecturerName</h6>
+                                        <small>R @claim.TotalAmount.ToString("N2")</small>
+                                    </div>
+                                    <small class="text-muted">Submitted: @claim.SubmissionDate.ToString("dd/MM/yyyy")</small>
+                                </a>
+                            }
+                        </div>
+                        @if (Model.ReadyForSettlement.Count > 5)
+                        {
+                            <div class="text-center mt-3">
+                                <a href="@Url.Action("SettlementQueue")" class="btn btn-sm btn-outline-warning">
+                                    View All (@Model.ReadyForSettlement.Count)
+                                </a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No claims ready for settlement.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentApprovedClaims.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var claim in Model.RecentApprovedClaims)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Claim #@claim.Id Approved</h6>
+                                        <small class="text-success">R @claim.TotalAmount.ToString("N2")</small>
+                                    </div>
+                                    <p class="mb-1">@claim.LecturerName</p>
+                                    <small class="text-muted">Manager approved on @DateTime.Now.ToString("dd/MM/yyyy")</small>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No recent activity.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

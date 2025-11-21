@@ -1,0 +1,920 @@
+﻿@model Claim
+@{
+    ViewData["Title"] = "Submit Claim - Automated";
+}
+
+<div class="container">
+    <h2><i class="fas fa-rocket me-2"></i>Automated Claim Submission</h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-magic me-2"></i>Smart Claim Form
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="autoClaimForm" asp-action="SubmitClaim" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="LecturerName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Lecturer Name *
+                                    </label>
+                                    <input asp-for="LecturerName" class="form-control auto-validate"
+                                           id="LecturerName"
+                                           placeholder="Enter your full name" required />
+                                    <div class="validation-feedback" id="LecturerNameFeedback"></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="HoursWorked" class="form-label">
+                                        <i class="fas fa-clock me-1"></i>Hours Worked *
+                                    </label>
+                                    <input asp-for="HoursWorked" type="number" step="0.5"
+                                           class="form-control auto-calculate auto-validate"
+                                           id="HoursWorked"
+                                           placeholder="Enter hours worked" required />
+                                    <div class="validation-feedback" id="HoursWorkedFeedback"></div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="HourlyRate" class="form-label">
+                                        <i class="fas fa-money-bill me-1"></i>Hourly Rate *
+                                    </label>
+                                    <input asp-for="HourlyRate" type="number" step="0.01"
+                                           class="form-control auto-calculate auto-validate"
+                                           id="HourlyRate"
+                                           placeholder="Enter hourly rate (50-500)" required />
+                                    <div class="validation-feedback" id="HourlyRateFeedback"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-robot me-1"></i>AI-Powered Assistance
+                                    </label>
+                                    <div class="ai-suggestions card bg-light">
+                                        <div class="card-body">
+                                            <small class="text-muted">
+                                                <i class="fas fa-lightbulb me-1"></i>
+                                                <span id="aiSuggestion">Enter your hours and rate to see smart suggestions...</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Auto-calculated Preview -->
+                                <div class="calculation-preview card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-calculator me-1"></i>Auto-Calculated Preview
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row text-center">
+                                            <div class="col-4">
+                                                <small class="text-muted">Hours</small>
+                                                <div class="h5" id="previewHours">0</div>
+                                            </div>
+                                            <div class="col-4">
+                                                <small class="text-muted">Rate</small>
+                                                <div class="h5" id="previewRate">R 0</div>
+                                            </div>
+                                            <div class="col-4">
+                                                <small class="text-muted">Total</small>
+                                                <div class="h5 text-success" id="previewTotal">R 0</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="AdditionalNotes" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>Additional Notes
+                            </label>
+                            <textarea asp-for="AdditionalNotes" class="form-control"
+                                      rows="3" placeholder="Add any additional information..."></textarea>
+                        </div>
+
+                        <!-- File Upload Section - Matches Your Existing Pattern -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-paperclip me-1"></i>Supporting Documents
+                            </label>
+
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>Upload Requirements:</strong> Maximum file size: <strong>10MB</strong> per file.
+                                    Supported formats: PDF, DOCX, XLSX
+                                </small>
+                            </div>
+
+                            <!-- Direct File Upload Button -->
+                            <div class="text-center mb-3">
+                                <button type="button" id="directUploadButton" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-folder-open me-2"></i>Upload Supporting Documents
+                                </button>
+                                <p class="text-muted mt-2 small">Click to select files from your computer</p>
+                            </div>
+
+                            <!-- Hidden File Input - Same as your existing view -->
+                            <input type="file" name="documents" multiple
+                                   class="form-control"
+                                   id="fileInput"
+                                   accept=".pdf,.docx,.xlsx"
+                                   style="display: none;" />
+
+                            <!-- Uploaded Files Display -->
+                            <div id="uploadedFilesSection" class="mt-4" style="display: none;">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-check-circle me-1"></i>Selected Documents
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="filePreview" class="file-preview-container"></div>
+                                        <div class="mt-3">
+                                            <button type="button" id="addMoreFiles" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-plus me-1"></i>Add More Files
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- File Validation Feedback -->
+                            <div class="file-validation-feedback mt-2" id="fileFeedback"></div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" id="autoFillDemo" class="btn btn-outline-info me-2">
+                                <i class="fas fa-bolt me-1"></i>Auto-Fill Demo
+                            </button>
+                            <button type="submit" id="submitBtn" class="btn btn-success px-4">
+                                <i class="fas fa-paper-plane me-1"></i>Submit Claim
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Enhanced Validation Status Panel -->
+            <div class="card sticky-top">
+                <div class="card-header bg-info text-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-check-circle me-1"></i>Validation Checklist
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="validationStatus">
+                        <!-- Lecturer Name Validation -->
+                        <div class="validation-item" data-field="LecturerName">
+                            <div class="validation-icon">
+                                <i class="fas fa-times text-danger"></i>
+                            </div>
+                            <div class="validation-content">
+                                <div class="validation-text">Lecturer name is required</div>
+                                <div class="validation-description">Must be at least 2 characters long</div>
+                            </div>
+                        </div>
+
+                        <!-- Hours Worked Validation -->
+                        <div class="validation-item" data-field="HoursWorked">
+                            <div class="validation-icon">
+                                <i class="fas fa-times text-danger"></i>
+                            </div>
+                            <div class="validation-content">
+                                <div class="validation-text">Hours must be valid</div>
+                                <div class="validation-description">Between 0.5 and 100 hours</div>
+                            </div>
+                        </div>
+
+                        <!-- Hourly Rate Validation -->
+                        <div class="validation-item" data-field="HourlyRate">
+                            <div class="validation-icon">
+                                <i class="fas fa-times text-danger"></i>
+                            </div>
+                            <div class="validation-content">
+                                <div class="validation-text">Hourly rate must be valid</div>
+                                <div class="validation-description">Between R50 and R500</div>
+                            </div>
+                        </div>
+
+                        <!-- Documents Validation -->
+                        <div class="validation-item" data-field="Documents">
+                            <div class="validation-icon">
+                                <i class="fas fa-times text-danger"></i>
+                            </div>
+                            <div class="validation-content">
+                                <div class="validation-text">Supporting documents</div>
+                                <div class="validation-description">At least one file recommended</div>
+                            </div>
+                        </div>
+
+                        <!-- Form Status -->
+                        <div class="validation-item" data-field="FormStatus">
+                            <div class="validation-icon">
+                                <i class="fas fa-times text-danger"></i>
+                            </div>
+                            <div class="validation-content">
+                                <div class="validation-text">All requirements complete</div>
+                                <div class="validation-description">Ready to submit claim</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div class="progress-section mt-4">
+                        <div class="progress" style="height: 10px;">
+                            <div id="validationProgress" class="progress-bar bg-danger" style="width: 0%"></div>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <small class="text-muted" id="progressText">0% Complete - Form cannot be submitted</small>
+                        </div>
+                    </div>
+
+                    <!-- Completion Badge -->
+                    <div id="completionBadge" class="text-center mt-3" style="display: none;">
+                        <div class="badge bg-success p-2">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Ready to Submit!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Validation Status Styles */
+        .validation-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+            .validation-item.valid {
+                background: #d1e7dd;
+                border-left: 4px solid #198754;
+            }
+
+            .validation-item.invalid {
+                background: #f8d7da;
+                border-left: 4px solid #dc3545;
+            }
+
+            .validation-item.warning {
+                background: #fff3cd;
+                border-left: 4px solid #ffc107;
+            }
+
+        .validation-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .validation-content {
+            flex: 1;
+        }
+
+        .validation-text {
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 2px;
+        }
+
+        .validation-description {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+
+        /* File Upload Styles */
+        #directUploadButton {
+            transition: all 0.3s ease;
+            padding: 12px 30px;
+            font-size: 1.1em;
+        }
+
+            #directUploadButton:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            }
+
+        .file-preview-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-preview-item {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+            .file-preview-item:hover {
+                background: #f8f9fa;
+                border-color: #0d6efd;
+                transform: translateX(5px);
+            }
+
+        .file-size-badge {
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+        }
+
+        .file-status-valid {
+            color: #198754;
+        }
+
+        .file-status-invalid {
+            color: #dc3545;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+        }
+
+        /* Completion Badge */
+        #completionBadge {
+            animation: pulse 2s infinite;
+        }
+
+        @@keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Form States */
+        .is-valid {
+            border-color: #198754 !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        #submitBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Main initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing claim submission form...');
+
+            initializeAutoCalculation();
+            initializeValidation();
+            initializeFileUpload();
+            initializeAutoFillDemo();
+            initializeFormSubmission();
+
+            console.log('Claim submission form initialized successfully');
+        });
+
+        // Enhanced File Upload with Direct File Explorer Access
+        function initializeFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const directUploadButton = document.getElementById('directUploadButton');
+            const addMoreFilesButton = document.getElementById('addMoreFiles');
+            const uploadedFilesSection = document.getElementById('uploadedFilesSection');
+            const preview = document.getElementById('filePreview');
+
+            if (!fileInput || !directUploadButton) return;
+
+            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
+            // Direct upload button click - opens file explorer immediately
+            directUploadButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                fileInput.click();
+            });
+
+            // Add more files button
+            if (addMoreFilesButton) {
+                addMoreFilesButton.addEventListener('click', () => {
+                    fileInput.click();
+                });
+            }
+
+            // File selection handler
+            fileInput.addEventListener('change', handleFileSelection);
+
+            function handleFileSelection() {
+                const files = fileInput.files;
+                if (!preview || !uploadedFilesSection) return;
+
+                preview.innerHTML = '';
+                let hasInvalidFiles = false;
+                let validFilesCount = 0;
+
+                // Show uploaded files section
+                uploadedFilesSection.style.display = 'block';
+
+                Array.from(files).forEach((file, index) => {
+                    // Validate file size
+                    if (file.size > MAX_FILE_SIZE) {
+                        hasInvalidFiles = true;
+                        showFileError(`"${file.name}" exceeds 10MB limit`);
+                        createFilePreviewItem(file, index, false);
+                        return;
+                    }
+
+                    // Validate file type
+                    const fileExtension = file.name.split('.').pop().toLowerCase();
+                    const allowedExtensions = ['pdf', 'docx', 'xlsx'];
+                    if (!allowedExtensions.includes(fileExtension)) {
+                        hasInvalidFiles = true;
+                        showFileError(`"${file.name}" - file type not supported`);
+                        createFilePreviewItem(file, index, false);
+                        return;
+                    }
+
+                    // Valid file
+                    validFilesCount++;
+                    createFilePreviewItem(file, index, true);
+                });
+
+                // Update documents validation
+                updateDocumentsValidation(validFilesCount > 0, validFilesCount);
+
+                // Add event listeners to remove buttons
+                document.querySelectorAll('.remove-file-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        removeFile(index);
+                    });
+                });
+            }
+
+            function createFilePreviewItem(file, index, isValid) {
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                const fileItem = document.createElement('div');
+                fileItem.className = `file-preview-item ${isValid ? 'file-status-valid' : 'file-status-invalid'}`;
+                fileItem.innerHTML = `
+                    <div class="flex-grow-1">
+                        <i class="fas fa-file-${getFileIcon(fileExtension)} me-2 ${isValid ? 'text-success' : 'text-danger'}"></i>
+                        <span class="${isValid ? 'fw-medium' : 'text-decoration-line-through'}">${file.name}</span>
+                        <span class="file-size-badge ms-2">${formatFileSize(file.size)}</span>
+                        ${!isValid ? '<small class="text-danger ms-2">(Invalid)</small>' : ''}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-file-btn" data-index="${index}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                preview.appendChild(fileItem);
+            }
+
+            function getFileIcon(extension) {
+                const icons = {
+                    'pdf': 'pdf',
+                    'docx': 'word',
+                    'xlsx': 'excel'
+                };
+                return icons[extension] || 'alt';
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function showFileError(message) {
+                const feedback = document.getElementById('fileFeedback');
+                if (feedback) {
+                    feedback.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>`;
+                }
+            }
+
+            window.removeFile = function(index) {
+                const dt = new DataTransfer();
+                const files = fileInput.files;
+
+                for (let i = 0; i < files.length; i++) {
+                    if (i !== index) dt.items.add(files[i]);
+                }
+
+                fileInput.files = dt.files;
+                handleFileSelection();
+
+                // Hide uploaded files section if no files left
+                if (dt.files.length === 0) {
+                    document.getElementById('uploadedFilesSection').style.display = 'none';
+                }
+            };
+        }
+
+        // Enhanced Validation System with Check Marks
+        function initializeValidation() {
+            const inputs = ['LecturerName', 'HoursWorked', 'HourlyRate'];
+
+            inputs.forEach(fieldName => {
+                const input = document.getElementById(fieldName);
+                if (input) {
+                    input.addEventListener('input', validateAllFields);
+                    input.addEventListener('change', validateAllFields);
+                    input.addEventListener('blur', validateAllFields);
+                }
+            });
+
+            // Initial validation
+            validateAllFields();
+        }
+
+        function validateAllFields() {
+            const validations = {
+                LecturerName: validateLecturerName(),
+                HoursWorked: validateHoursWorked(),
+                HourlyRate: validateHourlyRate(),
+                Documents: validateDocuments(),
+                FormStatus: false // Will be calculated
+            };
+
+            // Calculate overall form status
+            validations.FormStatus = validations.LecturerName && validations.HoursWorked && validations.HourlyRate;
+
+            updateValidationDisplay(validations);
+            updateSubmitButton(validations);
+        }
+
+        function validateLecturerName() {
+            const input = document.getElementById('LecturerName');
+            if (!input) return false;
+
+            const value = input.value.trim();
+            const isValid = value.length >= 2;
+
+            // Update field appearance
+            if (value.length === 0) {
+                input.classList.remove('is-valid', 'is-invalid');
+            } else {
+                input.classList.toggle('is-valid', isValid);
+                input.classList.toggle('is-invalid', !isValid);
+            }
+
+            return isValid;
+        }
+
+        function validateHoursWorked() {
+            const input = document.getElementById('HoursWorked');
+            if (!input) return false;
+
+            const value = parseFloat(input.value) || 0;
+            const isValid = value >= 0.5 && value <= 100;
+
+            // Update field appearance
+            if (input.value === '') {
+                input.classList.remove('is-valid', 'is-invalid');
+            } else {
+                input.classList.toggle('is-valid', isValid);
+                input.classList.toggle('is-invalid', !isValid);
+            }
+
+            return isValid;
+        }
+
+        function validateHourlyRate() {
+            const input = document.getElementById('HourlyRate');
+            if (!input) return false;
+
+            const value = parseFloat(input.value) || 0;
+            const isValid = value >= 50 && value <= 500;
+
+            // Update field appearance
+            if (input.value === '') {
+                input.classList.remove('is-valid', 'is-invalid');
+            } else {
+                input.classList.toggle('is-valid', isValid);
+                input.classList.toggle('is-invalid', !isValid);
+            }
+
+            return isValid;
+        }
+
+        function validateDocuments() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            let validFilesCount = 0;
+
+            if (files.length > 0) {
+                Array.from(files).forEach(file => {
+                    const fileExtension = file.name.split('.').pop().toLowerCase();
+                    const allowedExtensions = ['pdf', 'docx', 'xlsx'];
+                    if (allowedExtensions.includes(fileExtension) && file.size <= 10 * 1024 * 1024) {
+                        validFilesCount++;
+                    }
+                });
+            }
+
+            return validFilesCount > 0;
+        }
+
+        function updateDocumentsValidation(hasValidDocuments, validFilesCount = 0) {
+            const item = document.querySelector('.validation-item[data-field="Documents"]');
+            if (!item) return;
+
+            const icon = item.querySelector('.validation-icon i');
+            const text = item.querySelector('.validation-text');
+            const description = item.querySelector('.validation-description');
+
+            if (hasValidDocuments && validFilesCount > 0) {
+                item.className = 'validation-item valid';
+                icon.className = 'fas fa-check text-success';
+                text.textContent = 'Supporting documents uploaded';
+                description.textContent = `${validFilesCount} file(s) ready for submission`;
+            } else {
+                item.className = 'validation-item warning';
+                icon.className = 'fas fa-exclamation-triangle text-warning';
+                text.textContent = 'Supporting documents';
+                description.textContent = 'At least one file recommended';
+            }
+
+            // Re-run overall validation
+            validateAllFields();
+        }
+
+        function updateValidationDisplay(validations) {
+            const progressBar = document.getElementById('validationProgress');
+            const progressText = document.getElementById('progressText');
+            const completionBadge = document.getElementById('completionBadge');
+
+            // Count valid fields (excluding FormStatus)
+            const validationFields = ['LecturerName', 'HoursWorked', 'HourlyRate', 'Documents'];
+            const totalFields = validationFields.length;
+            const validCount = validationFields.filter(field => validations[field]).length;
+            const progress = (validCount / totalFields) * 100;
+
+            // Update progress bar
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+                progressBar.className = 'progress-bar';
+
+                if (progress === 100) {
+                    progressBar.classList.add('bg-success');
+                } else if (progress >= 50) {
+                    progressBar.classList.add('bg-warning');
+                } else {
+                    progressBar.classList.add('bg-danger');
+                }
+            }
+
+            // Update progress text
+            if (progressText) {
+                if (progress === 100) {
+                    progressText.textContent = '100% Complete - Ready to submit!';
+                    progressText.className = 'text-success fw-bold';
+                } else {
+                    progressText.textContent = `${Math.round(progress)}% Complete - ${totalFields - validCount} requirement(s) remaining`;
+                    progressText.className = 'text-muted';
+                }
+            }
+
+            // Show/hide completion badge
+            if (completionBadge) {
+                completionBadge.style.display = progress === 100 ? 'block' : 'none';
+            }
+
+            // Update individual validation items
+            updateValidationItem('LecturerName', validations.LecturerName);
+            updateValidationItem('HoursWorked', validations.HoursWorked);
+            updateValidationItem('HourlyRate', validations.HourlyRate);
+            updateValidationItem('Documents', validations.Documents);
+            updateValidationItem('FormStatus', validations.FormStatus);
+        }
+
+        function updateValidationItem(fieldName, isValid) {
+            const item = document.querySelector(`.validation-item[data-field="${fieldName}"]`);
+            if (!item) return;
+
+            const icon = item.querySelector('.validation-icon i');
+            const text = item.querySelector('.validation-text');
+            const description = item.querySelector('.validation-description');
+
+            // Update styling
+            item.className = `validation-item ${isValid ? 'valid' : 'invalid'}`;
+
+            // Update icon
+            if (icon) {
+                icon.className = `fas ${isValid ? 'fa-check text-success' : 'fa-times text-danger'}`;
+            }
+
+            // Update text based on field and validity
+            if (text && description) {
+                switch(fieldName) {
+                    case 'LecturerName':
+                        text.textContent = isValid ? 'Lecturer name is valid' : 'Lecturer name is required';
+                        description.textContent = isValid ? 'Name meets requirements' : 'Must be at least 2 characters long';
+                        break;
+                    case 'HoursWorked':
+                        text.textContent = isValid ? 'Hours are valid' : 'Hours must be valid';
+                        description.textContent = isValid ? 'Within acceptable range' : 'Between 0.5 and 100 hours';
+                        break;
+                    case 'HourlyRate':
+                        text.textContent = isValid ? 'Hourly rate is valid' : 'Hourly rate must be valid';
+                        description.textContent = isValid ? 'Within acceptable range' : 'Between R50 and R500';
+                        break;
+                    case 'Documents':
+                        if (isValid) {
+                            text.textContent = 'Supporting documents uploaded';
+                            description.textContent = 'Files ready for submission';
+                        } else {
+                            text.textContent = 'Supporting documents';
+                            description.textContent = 'At least one file recommended';
+                        }
+                        break;
+                    case 'FormStatus':
+                        text.textContent = isValid ? 'All requirements complete' : 'Requirements incomplete';
+                        description.textContent = isValid ? 'Ready to submit claim' : 'Complete all fields above';
+                        break;
+                }
+            }
+        }
+
+        function updateSubmitButton(validations) {
+            const submitBtn = document.getElementById('submitBtn');
+            const allValid = validations.LecturerName && validations.HoursWorked && validations.HourlyRate;
+
+            if (submitBtn) {
+                submitBtn.disabled = !allValid;
+
+                if (allValid) {
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Submit Claim';
+                    submitBtn.classList.remove('btn-secondary');
+                    submitBtn.classList.add('btn-success');
+                } else {
+                    submitBtn.innerHTML = '<i class="fas fa-lock me-1"></i>Complete Requirements';
+                    submitBtn.classList.remove('btn-success');
+                    submitBtn.classList.add('btn-secondary');
+                }
+            }
+        }
+
+        // Auto Calculation Functionality
+        function initializeAutoCalculation() {
+            const hoursInput = document.getElementById('HoursWorked');
+            const rateInput = document.getElementById('HourlyRate');
+
+            function updateCalculations() {
+                const hours = parseFloat(hoursInput?.value) || 0;
+                const rate = parseFloat(rateInput?.value) || 0;
+                const total = hours * rate;
+
+                // Update preview displays
+                const previewHours = document.getElementById('previewHours');
+                const previewRate = document.getElementById('previewRate');
+                const previewTotal = document.getElementById('previewTotal');
+
+                if (previewHours) previewHours.textContent = hours.toFixed(1);
+                if (previewRate) previewRate.textContent = `R ${rate.toFixed(2)}`;
+                if (previewTotal) previewTotal.textContent = `R ${total.toFixed(2)}`;
+
+                // Update AI suggestions
+                updateAISuggestions(hours, rate);
+            }
+
+            function updateAISuggestions(hours, rate) {
+                const suggestionElement = document.getElementById('aiSuggestion');
+                if (!suggestionElement) return;
+
+                let suggestion = '';
+
+                if (hours > 40 && rate > 400) {
+                    suggestion = 'High hours and premium hourly rate detected. Ensure you have proper authorization documents.';
+                } else if (hours > 40) {
+                    suggestion = 'High hours detected. Consider attaching overtime authorization.';
+                } else if (rate > 400) {
+                    suggestion = 'Premium hourly rate detected. Ensure proper documentation is attached.';
+                } else if (hours < 5 && hours > 0) {
+                    suggestion = 'Low hours detected. Consider combining with other part-time work.';
+                } else if (hours === 0 || rate === 0) {
+                    suggestion = 'Enter your hours and hourly rate to see smart suggestions...';
+                } else {
+                    suggestion = 'Standard claim parameters detected. Ready for submission.';
+                }
+
+                suggestionElement.textContent = suggestion;
+            }
+
+            // Add event listeners
+            if (hoursInput) {
+                hoursInput.addEventListener('input', updateCalculations);
+                hoursInput.addEventListener('change', updateCalculations);
+            }
+            if (rateInput) {
+                rateInput.addEventListener('input', updateCalculations);
+                rateInput.addEventListener('change', updateCalculations);
+            }
+
+            // Initial calculation
+            updateCalculations();
+        }
+
+        // Auto-Fill Demo
+        function initializeAutoFillDemo() {
+            const autoFillBtn = document.getElementById('autoFillDemo');
+            if (!autoFillBtn) return;
+
+            autoFillBtn.addEventListener('click', function() {
+                document.getElementById('LecturerName').value = 'Dr. Lebohang Selematsela';
+                document.getElementById('HoursWorked').value = '45';
+                document.getElementById('HourlyRate').value = '350';
+
+                const notesTextarea = document.querySelector('textarea[name="AdditionalNotes"]');
+                if (notesTextarea) {
+                    notesTextarea.value = 'Completed research project supervision and exam marking.';
+                }
+
+                // Trigger all validation and calculations
+                validateAllFields();
+                updateCalculations();
+            });
+        }
+
+        // Form Submission
+        function initializeFormSubmission() {
+            const form = document.getElementById('autoClaimForm');
+            if (!form) return;
+
+            form.addEventListener('submit', function(e) {
+                const validations = {
+                    LecturerName: validateLecturerName(),
+                    HoursWorked: validateHoursWorked(),
+                    HourlyRate: validateHourlyRate()
+                };
+
+                const allValid = Object.values(validations).every(Boolean);
+
+                if (!allValid) {
+                    e.preventDefault();
+                    alert('Please complete all required fields before submitting.');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Submitting...';
+                }
+            });
+        }
+    </script>
+}
