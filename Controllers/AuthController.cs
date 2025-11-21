@@ -33,7 +33,7 @@ namespace ClaimsManagementApp.Controllers
                 var user = _authService.Login(model.Username, model.Password);
                 if (user != null)
                 {
-                    // Use fully qualified name for Claims
+                    //full name for Claims
                     var claims = new[]
                     {
                         new System.Security.Claims.Claim(ClaimTypes.Name, user.Username),
