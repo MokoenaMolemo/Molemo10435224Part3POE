@@ -32,7 +32,7 @@ namespace ClaimsManagementApp.Models
 
         public List<SupportingDocument> Documents { get; set; } = new List<SupportingDocument>();
 
-        // Settlement properties
+        // Settlement props
         public DateTime? SettlementDate { get; set; }
         public string? SettlementNotes { get; set; }
         public string? ProcessedBy { get; set; }
